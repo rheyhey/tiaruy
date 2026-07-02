@@ -1,0 +1,661 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>will you be mine?</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,500&family=Jost:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --blush:#FBF1EC;
+    --cream:#FFFDF9;
+    --rose:#C2495C;
+    --rose-deep:#9C3447;
+    --plum:#3A2630;
+    --gold:#CFA15B;
+    --line: rgba(58,38,48,0.14);
+  }
+
+  *{margin:0;padding:0;box-sizing:border-box;}
+
+  html,body{
+    height:100%;
+    width:100%;
+    overflow:hidden;
+  }
+
+  body{
+    font-family:'Jost', sans-serif;
+    background:
+      radial-gradient(circle at 20% 15%, rgba(207,161,91,0.10), transparent 45%),
+      radial-gradient(circle at 85% 80%, rgba(194,73,92,0.10), transparent 50%),
+      var(--blush);
+    color:var(--plum);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    position:relative;
+  }
+
+  /* ---------- floating petals ---------- */
+  #petals{
+    position:fixed;
+    inset:0;
+    pointer-events:none;
+    z-index:1;
+    overflow:hidden;
+  }
+  .petal{
+    position:absolute;
+    top:-5%;
+    opacity:0;
+    will-change: transform, opacity;
+  }
+  .firefly{
+    position:absolute;
+    bottom:-4%;
+    opacity:0;
+    will-change: transform, opacity;
+    filter: drop-shadow(0 0 4px rgba(207,161,91,0.8));
+  }
+
+  /* ---------- stage ---------- */
+  .stage{
+    position:relative;
+    z-index:2;
+    width:min(92vw, 480px);
+    text-align:center;
+    padding: 56px 40px 48px;
+  }
+
+  /* vine / branch signature element, sits behind/around the card */
+  .vine-wrap{
+    position:absolute;
+    inset:-40px -10px -10px -10px;
+    z-index:-1;
+    pointer-events:none;
+  }
+  .vine-wrap svg{
+    width:100%;
+    height:100%;
+    overflow:visible;
+  }
+  .vine-path{
+    fill:none;
+    stroke:var(--rose);
+    stroke-width:1.4;
+    stroke-linecap:round;
+    stroke-dasharray: 1 1400;
+    stroke-dashoffset:0;
+    opacity:0.55;
+    transition: stroke-dasharray 1.8s cubic-bezier(.4,0,.2,1), opacity .6s ease;
+  }
+  .bud{
+    transform-origin:center;
+    transform: scale(0);
+    opacity:0;
+    transition: transform .6s cubic-bezier(.34,1.56,.64,1), opacity .4s ease;
+  }
+
+  .eyebrow{
+    font-size:12px;
+    letter-spacing:0.22em;
+    text-transform:uppercase;
+    color:var(--rose-deep);
+    opacity:0.75;
+    margin-bottom:18px;
+    font-weight:500;
+  }
+
+  h1{
+    font-family:'Cormorant Garamond', serif;
+    font-weight:500;
+    font-style:italic;
+    font-size:clamp(40px, 9vw, 58px);
+    line-height:1.08;
+    letter-spacing:0.01em;
+    color:var(--plum);
+    margin-bottom:14px;
+  }
+  h1 .accent{ color:var(--rose); font-style:italic; }
+
+  .sub{
+    font-size:14.5px;
+    color:var(--plum);
+    opacity:0.62;
+    max-width:320px;
+    margin:0 auto 38px;
+    line-height:1.6;
+    letter-spacing:0.01em;
+  }
+
+  .choices{
+    display:flex;
+    gap:16px;
+    justify-content:center;
+    align-items:center;
+  }
+
+  button{
+    font-family:'Jost', sans-serif;
+    font-size:15px;
+    letter-spacing:0.04em;
+    border-radius:999px;
+    cursor:pointer;
+    border:none;
+    transition: transform .25s cubic-bezier(.34,1.56,.64,1), box-shadow .25s ease, background .25s ease, color .25s ease;
+  }
+  button:focus-visible{
+    outline:2px solid var(--rose-deep);
+    outline-offset:3px;
+  }
+
+  #yesBtn{
+    padding:15px 38px;
+    background:var(--rose);
+    color:var(--cream);
+    box-shadow: 0 8px 22px -8px rgba(156,52,71,0.55);
+    font-weight:500;
+  }
+  #yesBtn:hover{ transform:translateY(-2px); box-shadow: 0 12px 26px -8px rgba(156,52,71,0.6); }
+  #yesBtn:active{ transform:translateY(0) scale(0.97); }
+
+  #noBtn{
+    padding:15px 30px;
+    background:transparent;
+    color:var(--plum);
+    opacity:0.55;
+    border:1px solid var(--line);
+  }
+  #noBtn:hover{ opacity:0.85; border-color: var(--plum); }
+  #noBtn:active{ transform:scale(0.97); }
+
+  /* ---------- result screens ---------- */
+  .result{
+    position:absolute;
+    inset:0;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    opacity:0;
+    pointer-events:none;
+    transition: opacity .7s ease;
+  }
+  .result.show{
+    opacity:1;
+    pointer-events:auto;
+  }
+
+  .result .mark{
+    font-size:34px;
+    margin-bottom:18px;
+    line-height:1;
+  }
+
+  .result h2{
+    font-family:'Cormorant Garamond', serif;
+    font-style:italic;
+    font-weight:500;
+    font-size:clamp(28px, 6vw, 38px);
+    color:var(--plum);
+    margin-bottom:10px;
+    padding: 0 10px;
+  }
+
+  .result p.note{
+    font-size:13px;
+    letter-spacing:0.04em;
+    color:var(--plum);
+    opacity:0.55;
+    max-width:280px;
+    margin-bottom: 6px;
+  }
+
+  /* zoom-in entrance for the message */
+  .result .mark,
+  .result h2,
+  .result p.note{
+    opacity:0;
+    transform: scale(0.82);
+    transition: opacity .7s cubic-bezier(.22,.9,.32,1.4), transform .7s cubic-bezier(.22,.9,.32,1.4);
+  }
+  /* no-screen reveals immediately together with .show */
+  #noScreen.show .mark{ opacity:1; transform:scale(1); transition-delay: .05s; }
+  #noScreen.show h2{ opacity:1; transform:scale(1); transition-delay: .15s; }
+  #noScreen.show p.note{ opacity:0.55; transform:scale(1); transition-delay: .3s; }
+  /* yes-screen headline waits for the heart + story sequence, triggered via .headline-ready */
+  #yesScreen.headline-ready .mark{ opacity:1; transform:scale(1); }
+  #yesScreen.headline-ready h2{ opacity:1; transform:scale(1); transition-delay: .1s; }
+  #yesScreen.headline-ready p.note{ opacity:0.55; transform:scale(1); transition-delay: .2s; }
+
+  /* ---------- heart-forming animation (garis menggambar hati) ---------- */
+  .bloom-stage{
+    width:100%;
+    display:flex;
+    justify-content:center;
+    margin-bottom:6px;
+  }
+  #bloomSvg{
+    width:104px;
+    height:auto;
+    overflow:visible;
+  }
+  .heart-glow{
+    fill:var(--rose);
+    opacity:0;
+    filter:blur(16px);
+    transition: opacity 1.3s ease 2.2s;
+  }
+  .bloom-stage.grow .heart-glow{ opacity:0.32; }
+  .heart-burst{
+    fill:var(--gold);
+    opacity:0;
+    filter:blur(9px);
+    transform-box: fill-box;
+    transform-origin:center;
+    transform:scale(0.6);
+  }
+  .heart-burst.fire{
+    animation: glowBurst 1.4s ease-out forwards;
+  }
+  @keyframes glowBurst{
+    0%{ opacity:0.6; transform:scale(0.6); }
+    100%{ opacity:0; transform:scale(2); }
+  }
+  .heart-path{
+    fill: rgba(194,73,92,0);
+    stroke: var(--rose-deep);
+    stroke-width: 3;
+    stroke-linejoin: round;
+    stroke-linecap: round;
+    stroke-dasharray: 1 620;
+    transform-box: fill-box;
+    transform-origin: center;
+    transition:
+      stroke-dasharray 2.6s cubic-bezier(.4,0,.2,1),
+      fill 1.1s ease 2s,
+      stroke 1.1s ease 2s;
+  }
+  .bloom-stage.grow .heart-path{
+    stroke-dasharray: 620 620;
+    fill: var(--rose);
+    stroke: var(--rose);
+  }
+  .heart-path.beat{
+    animation: heartbeat 1.7s ease-in-out infinite;
+  }
+  @keyframes heartbeat{
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.08); }
+  }
+
+  /* ---------- story captions (fade in & out, one at a time) ---------- */
+  .story-stage{
+    min-height:34px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    padding:0 14px;
+    margin-bottom:4px;
+  }
+  .story-line{
+    font-family:'Cormorant Garamond', serif;
+    font-style:italic;
+    font-weight:500;
+    font-size:16px;
+    color:var(--rose-deep);
+    text-align:center;
+    max-width:300px;
+    opacity:0;
+    transform: translateY(8px);
+    transition: opacity .9s ease, transform .9s ease;
+  }
+  .story-line.show{
+    opacity:0.88;
+    transform: translateY(0);
+  }
+
+  .question{
+    transition: opacity .5s ease, transform .5s ease;
+  }
+  .question.hide{
+    opacity:0;
+    transform: scale(0.96);
+    pointer-events:none;
+  }
+
+  .container{
+    position:relative;
+    width:min(92vw, 480px);
+    height: 420px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+  }
+
+  @media (max-width:420px){
+    .choices{ flex-direction:column; gap:12px; width:100%; }
+    button{ width:100%; }
+    .container{ height: 460px; }
+  }
+
+  .sr-only{
+    position:absolute;
+    width:1px;height:1px;
+    overflow:hidden;
+    clip:rect(0,0,0,0);
+  }
+
+  /* ---------- music toggle ---------- */
+  #musicToggle{
+    position:fixed;
+    top:18px;
+    right:18px;
+    z-index:5;
+    width:42px;
+    height:42px;
+    border-radius:50%;
+    background:rgba(255,253,249,0.85);
+    border:1px solid var(--line);
+    backdrop-filter: blur(4px);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-size:17px;
+    box-shadow: 0 4px 14px -4px rgba(58,38,48,0.18);
+  }
+  #musicToggle:hover{ transform:translateY(-1px); }
+</style>
+</head>
+<body>
+
+<button id="musicToggle" type="button" aria-label="mute or unmute music">🔈</button>
+
+<div id="petals" aria-hidden="true"></div>
+
+<!-- ====== BACKSOUND ======
+     Taruh file musik kamu di folder "audio" (sejajar dengan file html ini),
+     namai "backsound.mp3". Bisa ganti nama/path di "src" bawah ini kalau mau beda. -->
+<audio id="bgMusic" src="audio/backsound.mp3" loop preload="auto"></audio>
+
+<div class="container">
+
+  <!-- QUESTION SCREEN -->
+  <div class="stage question" id="questionScreen">
+    <div class="vine-wrap" aria-hidden="true">
+      <svg viewBox="0 0 400 480" preserveAspectRatio="xMidYMid meet">
+        <path class="vine-path" id="vineLeft"
+          d="M 30 470 C 10 380, 40 320, 20 250 C 0 180, 35 140, 25 70"/>
+        <path class="vine-path" id="vineRight"
+          d="M 370 470 C 392 380, 362 320, 382 250 C 402 180, 367 140, 377 70"/>
+        <g class="bud" id="bud1" transform="translate(18,150)">
+          <circle r="5.5" fill="var(--rose)"/>
+        </g>
+        <g class="bud" id="bud2" transform="translate(385,300)">
+          <circle r="5.5" fill="var(--gold)"/>
+        </g>
+        <g class="bud" id="bud3" transform="translate(15,330)">
+          <circle r="4.5" fill="var(--rose)"/>
+        </g>
+        <g class="bud" id="bud4" transform="translate(388,170)">
+          <circle r="4.5" fill="var(--gold)"/>
+        </g>
+      </svg>
+    </div>
+
+    <div class="eyebrow">a small question</div>
+    <h1>will you be<br><span class="accent">my girlfriend?</span></h1>
+    <p class="sub">no pressure. just an honest question, from me to you.</p>
+
+    <div class="choices">
+      <button id="yesBtn">yes</button>
+      <button id="noBtn">no</button>
+    </div>
+  </div>
+
+  <!-- YES SCREEN -->
+  <div class="result" id="yesScreen">
+    <div class="bloom-stage" id="bloomStage">
+      <svg viewBox="0 0 160 150" id="bloomSvg">
+        <circle class="heart-glow" cx="80" cy="68" r="46"/>
+        <circle class="heart-burst" id="heartBurst" cx="80" cy="68" r="46"/>
+        <path class="heart-path" id="heartPath"
+          d="M80 130 C 46 103 12 77 12 46 C 12 24 30 8 52 8 C 66 8 76 16 80 28 C 84 16 94 8 108 8 C 130 8 148 24 148 46 C 148 77 114 103 80 130 Z"/>
+      </svg>
+    </div>
+    <div class="story-stage" aria-live="polite">
+      <p class="story-line" id="storyLine"></p>
+    </div>
+    <div class="mark">🌸</div>
+    <h2>Let's write our love story together.</h2>
+    <p class="note">Today is where our story begins.</p>
+  </div>
+
+  <!-- NO SCREEN -->
+  <div class="result" id="noScreen">
+    <div class="mark">🤝</div>
+    <h2>thanks, lets be friends</h2>
+    <p class="note">honesty is worth more than a yes.</p>
+  </div>
+
+</div>
+
+<script>
+  const questionScreen = document.getElementById('questionScreen');
+  const yesScreen = document.getElementById('yesScreen');
+  const noScreen = document.getElementById('noScreen');
+  const yesBtn = document.getElementById('yesBtn');
+  const noBtn = document.getElementById('noBtn');
+  const petalsLayer = document.getElementById('petals');
+
+  // ====== BACKSOUND (musik latar) ======
+  const bgMusic = document.getElementById('bgMusic');
+  const musicToggle = document.getElementById('musicToggle');
+  bgMusic.volume = 0.45; // atur volume 0.0 - 1.0
+  let musicStarted = false;
+  let musicMuted = false;
+
+  function startMusicOnce(){
+    if(musicStarted) return;
+    musicStarted = true;
+    bgMusic.play().catch(()=>{
+      // kalau browser tetap menolak autoplay, musik akan mulai
+      // begitu user pertama kali klik tombol musik atau yes/no
+    });
+  }
+  // musik hanya dimulai saat klik yes, bukan saat tap sembarangan
+
+  musicToggle.addEventListener('click', ()=>{
+    startMusicOnce();
+    musicMuted = !musicMuted;
+    bgMusic.muted = musicMuted;
+    musicToggle.textContent = musicMuted ? '🔇' : '🔈';
+  });
+
+  // ====== KONFIGURASI NOTIFIKASI EMAIL (EmailJS) ======
+  // Isi 4 nilai di bawah ini sesuai dashboard EmailJS kamu.
+  // Cara dapat nilainya: lihat instruksi di chat sebelumnya.
+  const EMAILJS_PUBLIC_KEY  = "ISI_PUBLIC_KEY";    // Account > General
+  const EMAILJS_SERVICE_ID  = "ISI_SERVICE_ID";    // Email Services
+  const EMAILJS_TEMPLATE_ID = "ISI_TEMPLATE_ID";   // Email Templates
+  const CLIENT_EMAIL        = "email-client@contoh.com"; // tujuan notifikasi
+  const NOTIF_ENABLED = true; // ganti jadi false kalau mau matikan notifikasi
+
+  // load SDK EmailJS sekali saat halaman dibuka
+  (function loadEmailJS(){
+    const s = document.createElement('script');
+    s.src = "https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js";
+    s.onload = () => { if (window.emailjs) emailjs.init(EMAILJS_PUBLIC_KEY); };
+    document.head.appendChild(s);
+  })();
+
+  function sendEmailNotif(answer){
+    if(!NOTIF_ENABLED || !window.emailjs) return;
+    const message = answer === 'yes'
+      ? "Dia menjawab YES! 🌿💗"
+      : "Dia menjawab no.";
+    emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, {
+      answer: message,
+      to_email: CLIENT_EMAIL
+    }).catch(()=>{
+      // gagal kirim notifikasi tidak akan mengganggu tampilan untuk user
+    });
+  }
+
+  function growVines(){
+    document.querySelectorAll('.vine-path').forEach(p=>{
+      p.style.strokeDasharray = '1400 1400';
+    });
+    ['bud1','bud2','bud3','bud4'].forEach((id,i)=>{
+      const el = document.getElementById(id);
+      setTimeout(()=>{
+        el.style.opacity = 1;
+        el.style.transform = el.getAttribute('transform').includes('translate')
+          ? el.getAttribute('transform') + ' scale(1)' : 'scale(1)';
+      }, 500 + i*220);
+    });
+  }
+
+  function spawnPetals(count, emoji, duration){
+    for(let i=0;i<count;i++){
+      const span = document.createElement('span');
+      span.className='petal';
+      span.textContent = emoji[Math.floor(Math.random()*emoji.length)];
+      const size = 14 + Math.random()*16;
+      span.style.fontSize = size+'px';
+      span.style.left = Math.random()*100+'%';
+      petalsLayer.appendChild(span);
+
+      const fall = 600 + Math.random()*400;
+      const drift = (Math.random()-0.5)*120;
+      const rot = (Math.random()-0.5)*360;
+      const delay = Math.random()*600;
+
+      span.animate([
+        { transform:`translate(0,0) rotate(0deg)`, opacity:0 },
+        { transform:`translate(${drift*0.3}px, ${fall*0.3}px) rotate(${rot*0.3}deg)`, opacity:0.9, offset:0.15 },
+        { transform:`translate(${drift}px, ${fall}px) rotate(${rot}deg)`, opacity:0 }
+      ], { duration: duration + Math.random()*1500, delay: delay, easing:'ease-in', fill:'forwards' });
+
+      setTimeout(()=> span.remove(), duration + delay + 1600);
+    }
+  }
+
+  // sparkle hangat yang melayang naik perlahan, untuk ambience terus-menerus
+  function spawnFireflies(count){
+    for(let i=0;i<count;i++){
+      const span = document.createElement('span');
+      span.className='firefly';
+      span.textContent = Math.random() > 0.5 ? '✨' : '·';
+      const size = 10 + Math.random()*10;
+      span.style.fontSize = size+'px';
+      span.style.left = Math.random()*100+'%';
+      span.style.color = 'var(--gold)';
+      petalsLayer.appendChild(span);
+
+      const rise = 420 + Math.random()*260;
+      const drift = (Math.random()-0.5)*80;
+      const delay = Math.random()*400;
+      const duration = 3200 + Math.random()*1800;
+
+      span.animate([
+        { transform:`translate(0,0) scale(0.6)`, opacity:0 },
+        { transform:`translate(${drift*0.4}px, ${-rise*0.4}px) scale(1)`, opacity:0.85, offset:0.3 },
+        { transform:`translate(${drift}px, ${-rise}px) scale(0.7)`, opacity:0 }
+      ], { duration: duration, delay: delay, easing:'ease-out', fill:'forwards' });
+
+      setTimeout(()=> span.remove(), duration + delay + 600);
+    }
+  }
+
+  let ambientInterval = null;
+  function startAmbient(){
+    spawnPetals(8, ['🌸','💗'], 3000);
+    spawnFireflies(6);
+    ambientInterval = setInterval(()=>{
+      spawnPetals(5, ['🌸','🌿','💗'], 3000);
+      spawnFireflies(4);
+    }, 2200);
+  }
+
+  // ====== alur cerita singkat setelah yes: hati terbentuk -> kalimat tulus -> judul utama ======
+  const STORY_LINES = [
+    "The most beautiful journeys begin with a simple 'yes'",
+    "May today be the first page of something beautiful.",
+    "Thank you for trusting me with your heart. ",
+    "and for letting me be part of your journey.",
+    "Our story doesn't need to be perfect to be beautiful.",
+    "Let's take it slow and let it grow, together.",
+    "One day at a time, one memory at a time.",
+  ];
+  const LINE_VISIBLE_MS = 2700;   // berapa lama satu kalimat tampil
+  const LINE_GAP_MS     = 950;    // jeda fade out sebelum kalimat berikutnya
+
+  const bloomStage = document.getElementById('bloomStage');
+  const heartBurst = document.getElementById('heartBurst');
+  const heartPath  = document.getElementById('heartPath');
+  const storyLine  = document.getElementById('storyLine');
+
+  function playYesSequence(){
+    // 1. hati mulai menggambar garisnya
+    bloomStage.classList.add('grow');
+
+    // 2. setelah garis selesai (~2.6s) + sedikit jeda, hati berkilau & berdetak
+    setTimeout(()=>{
+      heartBurst.classList.add('fire');
+      heartPath.classList.add('beat');
+    }, 2700);
+
+    // 3. mulai rangkaian kalimat tulus, satu per satu, fade in & fade out
+    let t = 3400; // mulai setelah hati berkilau
+    STORY_LINES.forEach((text, i)=>{
+      setTimeout(()=>{
+        storyLine.textContent = text;
+        storyLine.classList.add('show');
+      }, t);
+      setTimeout(()=>{
+        storyLine.classList.remove('show');
+      }, t + LINE_VISIBLE_MS);
+      t += LINE_VISIBLE_MS + LINE_GAP_MS;
+    });
+
+    // 4. setelah kalimat terakhir selesai, judul utama muncul sebagai puncak cerita
+    //    dan animasi bunga/sparkle ambient dihentikan
+    setTimeout(()=>{
+      yesScreen.classList.add('headline-ready');
+      if(ambientInterval){
+        clearInterval(ambientInterval);
+        ambientInterval = null;
+      }
+    }, t + 200);
+  }
+
+  function reveal(target){
+    questionScreen.classList.add('hide');
+    setTimeout(()=>{
+      target.classList.add('show');
+    }, 350);
+  }
+
+  yesBtn.addEventListener('click', ()=>{
+    startMusicOnce();
+    growVines();
+    spawnPetals(20, ['🌸','🌿','💗'], 3200);
+    reveal(yesScreen);
+    playYesSequence();
+    startAmbient();
+    sendEmailNotif('yes');
+  });
+
+  noBtn.addEventListener('click', ()=>{
+    spawnPetals(14, ['🍃'], 2600);
+    bgMusic.pause();
+    reveal(noScreen);
+    sendEmailNotif('no');
+  });
+</script>
+
+</body>
+</html>
